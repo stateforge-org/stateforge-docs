@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" color="#ffffff" role="img" aria-labelledby="stateforge-title stateforge-desc" shape-rendering="geometricPrecision">
+  <title id="stateforge-title">StateForge</title>
+  <desc id="stateforge-desc">A cube containing a layered state checkpoint.</desc>
+  <style>.stateforge-mark-path{vector-effect:non-scaling-stroke}</style>
+  <g class="stateforge-mark-path" stroke="currentColor" stroke-linecap="round">
+    <path d="M50 11 85 31v38L50 89 15 69V31Z" stroke-width="2.35" stroke-linejoin="miter"/>
+    <path d="M50 11v23M15 69l24.1-13.6M85 69 60.9 55.4" stroke-width="1.75" opacity=".3"/>
+    <path d="m50 34 23 14-23 14-23-14Z" fill="currentColor" fill-opacity=".07" stroke-width="2.65" stroke-linejoin="miter"/>
+    <path d="m27 55 23 14 23-14" stroke-width="2.35" stroke-linejoin="miter" opacity=".74"/>
+    <path d="m27 62 23 14 23-14" stroke-width="2.05" stroke-linejoin="miter" opacity=".48"/>
+    <path d="M50 34v28M27 48l23 3 23-3" stroke-width="1.2" stroke-linejoin="round" opacity=".38"/>
+  </g>
+</svg>

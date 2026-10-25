@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stateforge-docs-theme"
+version = "0.1.0"
+description = "Shared documentation presentation and interactive procedure tooling for StateForge."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "StateForge" }]
+dependencies = [
+  "mkdocs>=1.6,<2",
+  "mkdocs-material>=9.6,<10",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "mypy>=1.17",
+  "pytest>=8.4",
+  "ruff>=0.12",
+  "types-PyYAML>=6",
+]
+
+[project.entry-points."mkdocs.themes"]
+stateforge = "stateforge_docs_theme.theme"
+
+[project.entry-points."mkdocs.plugins"]
+stateforge = "stateforge_docs_theme.plugin:StateForgeDocsPlugin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stateforge_docs_theme"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/README.md",
+  "/LICENSE",
+  "/pyproject.toml",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["stateforge_docs_theme"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

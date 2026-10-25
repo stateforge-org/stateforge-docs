@@ -1,0 +1,29 @@
+site_name: StateForge documentation fixture
+site_url: https://docs.stateforge.net/fixture/
+
+theme:
+  name: stateforge
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Use system preference
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Use light mode
+
+plugins:
+  - search
+  - stateforge:
+      component: protocol
+
+nav:
+  - v0.1.0:
+      - Procedure player: v0.1.0/index.md

@@ -1,0 +1,366 @@
+:root {
+  --sf-accent: #2878ef;
+  --sf-series-1: #2878ef;
+  --sf-series-2: #0b8a71;
+  --sf-series-3: #b76509;
+  --sf-series-4: #7652c7;
+  --sf-series-5: #b53e62;
+  --sf-series-6: #397a95;
+  --sf-success: #16865b;
+  --sf-warning: #c66b0a;
+  --sf-failure: #c43c4a;
+  --sf-surface: color-mix(in srgb, var(--md-default-bg-color) 94%, var(--sf-accent));
+  --sf-surface-strong: color-mix(in srgb, var(--md-default-bg-color) 88%, var(--sf-accent));
+  --sf-border: color-mix(in srgb, var(--md-default-fg-color) 18%, transparent);
+  --sf-muted: color-mix(in srgb, var(--md-default-fg-color) 66%, transparent);
+}
+
+[data-md-color-scheme="slate"] {
+  --sf-surface: color-mix(in srgb, var(--md-default-bg-color) 90%, var(--sf-accent));
+  --sf-surface-strong: color-mix(in srgb, var(--md-default-bg-color) 82%, var(--sf-accent));
+  --sf-border: color-mix(in srgb, var(--md-default-fg-color) 24%, transparent);
+  --sf-muted: color-mix(in srgb, var(--md-default-fg-color) 72%, transparent);
+}
+
+.md-header {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 94%, #07111f);
+}
+
+.md-grid {
+  max-width: 90rem;
+}
+
+stateforge-procedure-player {
+  display: block;
+  margin: 2rem 0;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sf-procedure {
+  color: var(--md-default-fg-color);
+  font-size: .76rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sf-procedure__scenario-label {
+  color: var(--sf-muted);
+  display: grid;
+  font-size: .64rem;
+  gap: .25rem;
+  min-width: 9rem;
+}
+
+.sf-procedure select,
+.sf-procedure button {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--sf-border);
+  border-radius: .45rem;
+  color: var(--md-default-fg-color);
+  font: inherit;
+}
+
+.sf-procedure select {
+  min-height: 2rem;
+  padding: .35rem .6rem;
+}
+
+.sf-procedure button {
+  min-height: 2rem;
+  padding: .35rem .8rem;
+}
+
+.sf-procedure button:not(:disabled):hover,
+.sf-procedure button:not(:disabled):focus-visible,
+.sf-procedure select:focus-visible {
+  border-color: var(--sf-accent);
+  outline: 2px solid color-mix(in srgb, var(--sf-accent) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.sf-procedure button:disabled {
+  opacity: .45;
+}
+
+.sf-procedure__topology-scroll {
+  overflow-x: auto;
+  padding-bottom: .4rem;
+  scrollbar-color: var(--sf-border) transparent;
+}
+
+.sf-procedure__topology {
+  min-width: max(100%, calc(var(--sf-entity-count) * 8.5rem));
+}
+
+.sf-procedure__lane-grid,
+.sf-procedure__flow-grid {
+  display: grid;
+  gap: .65rem;
+  grid-template-columns: repeat(var(--sf-entity-count), minmax(7.25rem, 1fr));
+}
+
+.sf-procedure__lane {
+  --sf-entity-accent: var(--sf-series-1);
+}
+
+.sf-procedure__lane:nth-child(6n + 2) { --sf-entity-accent: var(--sf-series-2); }
+.sf-procedure__lane:nth-child(6n + 3) { --sf-entity-accent: var(--sf-series-3); }
+.sf-procedure__lane:nth-child(6n + 4) { --sf-entity-accent: var(--sf-series-4); }
+.sf-procedure__lane:nth-child(6n + 5) { --sf-entity-accent: var(--sf-series-5); }
+.sf-procedure__lane:nth-child(6n + 6) { --sf-entity-accent: var(--sf-series-6); }
+
+.sf-procedure__lane {
+  background: color-mix(in srgb, var(--sf-entity-accent) 9%, var(--md-default-bg-color));
+  border-top: 3px solid color-mix(in srgb, var(--sf-entity-accent) 55%, var(--sf-border));
+  min-height: 7rem;
+  padding: .65rem .75rem .75rem;
+  transition: background-color .2s ease, border-color .2s ease, opacity .2s ease;
+}
+
+.sf-procedure__lane.is-active {
+  background: color-mix(in srgb, var(--sf-entity-accent) 20%, var(--md-default-bg-color));
+  border-color: var(--sf-entity-accent);
+}
+
+.sf-procedure__lane:not(.is-active) {
+  opacity: .58;
+}
+
+.sf-procedure__entity-kind,
+.sf-procedure__phase-label,
+.sf-procedure__context-kind,
+.sf-procedure__step-count {
+  color: var(--sf-muted);
+  display: block;
+  font-size: .61rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sf-procedure__entity strong,
+.sf-procedure__activity strong {
+  display: block;
+  margin: .2rem 0;
+}
+
+.sf-procedure__phase {
+  align-items: center;
+  display: flex;
+  gap: .4rem;
+  justify-content: center;
+  margin: .75rem 0 .25rem;
+}
+
+.sf-procedure__phase strong {
+  background: var(--sf-surface-strong);
+  border-radius: 999px;
+  font-size: .62rem;
+  padding: .18rem .5rem;
+}
+
+.sf-procedure__flow-grid {
+  grid-auto-rows: minmax(3.2rem, auto);
+  margin-top: .55rem;
+  min-height: 3.2rem;
+  position: relative;
+}
+
+.sf-procedure__flow-grid.is-empty::before {
+  background: var(--sf-border);
+  content: "";
+  height: 2px;
+  left: 3%;
+  position: absolute;
+  right: 3%;
+  top: 1.6rem;
+}
+
+.sf-procedure__transition {
+  --sf-transition-color: var(--sf-accent);
+  min-width: 0;
+  position: relative;
+}
+
+.sf-procedure__transition[data-tone="success"] { --sf-transition-color: var(--sf-success); }
+.sf-procedure__transition[data-tone="warning"] { --sf-transition-color: var(--sf-warning); }
+.sf-procedure__transition[data-tone="failure"] { --sf-transition-color: var(--sf-failure); }
+
+.sf-procedure__transition-line {
+  background: var(--sf-transition-color);
+  height: 2px;
+  left: 5%;
+  position: absolute;
+  right: 5%;
+  top: 1.6rem;
+}
+
+.sf-procedure__transition-line::after {
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--sf-transition-color);
+  border-top: 5px solid transparent;
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sf-procedure__transition.is-reverse .sf-procedure__transition-line::after {
+  border-left: 0;
+  border-right: 8px solid var(--sf-transition-color);
+  left: -1px;
+  right: auto;
+}
+
+.sf-procedure__transition.is-self .sf-procedure__transition-line {
+  left: 35%;
+  right: 35%;
+}
+
+.sf-procedure__transition-message {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--sf-transition-color);
+  border-radius: .28rem;
+  color: var(--md-default-fg-color);
+  font-size: .67rem;
+  font-weight: 600;
+  left: 50%;
+  max-width: calc(100% - 1rem);
+  overflow-wrap: anywhere;
+  padding: .24rem .42rem;
+  position: absolute;
+  text-align: center;
+  top: .75rem;
+  transform: translateX(-50%);
+  white-space: normal;
+  z-index: 1;
+}
+
+.sf-procedure__activity {
+  border-top: 1px solid color-mix(in srgb, var(--sf-entity-accent) 24%, transparent);
+  margin-top: .55rem;
+  padding-top: .45rem;
+  transition: opacity .2s ease;
+}
+
+.sf-procedure__activity.is-idle {
+  opacity: .46;
+}
+
+.sf-procedure__activity ul {
+  color: var(--sf-muted);
+  font-size: .65rem;
+  margin: .35rem 0 0;
+  padding-left: 1rem;
+}
+
+.sf-procedure__activity li + li {
+  margin-top: .15rem;
+}
+
+.sf-procedure__context {
+  align-items: center;
+  display: flex;
+  gap: .45rem;
+  justify-content: center;
+  margin: .5rem 0 .8rem;
+}
+
+.sf-procedure__context code {
+  background: var(--sf-surface-strong);
+  border-radius: .25rem;
+  overflow-wrap: anywhere;
+  padding: .25rem .4rem;
+  white-space: normal;
+}
+
+.sf-procedure__detail {
+  background: var(--sf-surface);
+  border-radius: .6rem;
+  display: grid;
+  gap: .8rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: .8rem;
+}
+
+.sf-procedure__detail h3 {
+  font-size: .88rem;
+  margin: .15rem 0 .2rem;
+}
+
+.sf-procedure__detail p {
+  margin: 0;
+}
+
+.sf-procedure__fields {
+  align-content: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  justify-content: flex-end;
+  max-width: 17rem;
+}
+
+.sf-procedure__fields code {
+  background: var(--sf-surface-strong);
+  border-radius: .25rem;
+  padding: .16rem .35rem;
+  white-space: nowrap;
+}
+
+.sf-procedure__progress {
+  background: var(--sf-surface-strong);
+  border-radius: 999px;
+  height: .3rem;
+  margin: .8rem 0;
+  overflow: hidden;
+}
+
+.sf-procedure__progress-bar {
+  background: var(--sf-accent);
+  height: 100%;
+  transition: width .2s ease;
+}
+
+.sf-procedure__controls {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: center;
+}
+
+.sf-procedure__controls .is-primary {
+  background: var(--md-default-fg-color);
+  color: var(--md-default-bg-color);
+}
+
+.sf-procedure-fallback {
+  border-left: 3px solid var(--sf-accent);
+  padding-left: .8rem;
+}
+
+@media (max-width: 46rem) {
+  .sf-procedure__scenario-label {
+    width: 100%;
+  }
+
+  .sf-procedure__detail {
+    grid-template-columns: 1fr;
+  }
+
+  .sf-procedure__fields {
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-procedure__lane,
+  .sf-procedure__activity,
+  .sf-procedure__progress-bar {
+    transition: none;
+  }
+}

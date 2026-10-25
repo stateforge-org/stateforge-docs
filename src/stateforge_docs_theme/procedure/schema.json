@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stateforge.net/schemas/docs/procedure/v1",
+  "title": "StateForge interactive procedure declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "procedure", "title", "summary", "entities", "scenarios"],
+  "properties": {
+    "schema": { "const": "stateforge.docs/procedure/v1" },
+    "procedure": { "$ref": "#/$defs/identifier" },
+    "title": { "$ref": "#/$defs/text" },
+    "summary": { "$ref": "#/$defs/text" },
+    "default_scenario": { "$ref": "#/$defs/identifier" },
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/entity" }
+    },
+    "scenarios": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/identifier" },
+      "additionalProperties": { "$ref": "#/$defs/scenario" }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "$ref": "#/$defs/text" },
+        "kind": {
+          "enum": ["process", "service", "resource", "storage", "external", "user"]
+        },
+        "role": { "$ref": "#/$defs/text" }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "items"],
+      "properties": {
+        "title": { "$ref": "#/$defs/text" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target", "label"],
+      "properties": {
+        "source": { "$ref": "#/$defs/identifier" },
+        "target": { "$ref": "#/$defs/identifier" },
+        "label": { "$ref": "#/$defs/text" },
+        "tone": { "enum": ["normal", "success", "warning", "failure"] }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "detail", "phase", "active", "transitions", "activities"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "title": { "$ref": "#/$defs/text" },
+        "detail": { "$ref": "#/$defs/text" },
+        "phase": { "$ref": "#/$defs/text" },
+        "active": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" }
+        },
+        "activities": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/activity" }
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": { "$ref": "#/$defs/text" },
+            "value": { "$ref": "#/$defs/text" }
+          }
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "steps"],
+      "properties": {
+        "label": { "$ref": "#/$defs/text" },
+        "prefix": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scenario", "through"],
+          "properties": {
+            "scenario": { "$ref": "#/$defs/identifier" },
+            "through": { "$ref": "#/$defs/identifier" }
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/step" }
+        }
+      }
+    }
+  }
+}

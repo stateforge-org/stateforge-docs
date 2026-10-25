@@ -1,0 +1,12 @@
+extends: material
+locale: en
+logo: assets/images/stateforge-mark.svg
+favicon: assets/images/stateforge-favicon.svg
+
+features:
+  - navigation.sections
+  - navigation.indexes
+  - navigation.top
+  - content.code.copy
+  - search.suggest
+  - search.highlight
