@@ -20,6 +20,7 @@ dependencies = [
 dev = [
   "build>=1.2",
   "mypy>=1.17",
+  "playwright>=1.56,<2",
   "pytest>=8.4",
   "ruff>=0.12",
   "types-PyYAML>=6",
@@ -57,3 +58,6 @@ packages = ["stateforge_docs_theme"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "visual: browser-backed responsive and accessibility verification",
+]

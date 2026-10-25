@@ -7,3 +7,7 @@ directory.
 source: procedures/bootstrap.yaml
 scenario: success
 ```
+
+```python
+from stateforge_docs_theme import __version__
+```

@@ -61,10 +61,63 @@ plugins:
   - search
   - stateforge:
       component: protocol
+      documentation_version: v0.1.0
+      latest_version: v0.2.0
+      versions:
+        - label: v0.2.0
+          url: ../v0.2.0/
+        - label: v0.1.0
+          url: ./
 ```
 
-Supported component identities are `stateforge`, `agent`, `provider`,
-`protocol`, `control-plane`, and `sf-aop`.
+Built-in component accents are provided for `stateforge`, `agent`, `provider`,
+`protocol`, `control-plane`, and `sf-aop`. A future repository may use any
+lowercase hyphenated component identity. It inherits the StateForge accent or
+supplies an explicit six-digit `accent`; the theme chooses a WCAG-compliant
+light or dark foreground automatically.
+
+The optional version configuration renders one keyboard-accessible selector.
+When `documentation_version` differs from `latest_version`, the theme also
+renders a historical-version warning with a link to the latest documentation.
+Publishing and redirect behavior remain owned by later documentation
+milestones.
+
+## Theme ownership and Material boundary
+
+The package owns only shared presentation: the StateForge mark and favicon,
+brand tokens, system typography, light and dark palettes, focus treatment,
+component accents, repository-link styling, code presentation, the version
+selector, and reusable interactive components. Consumers continue to own
+their Markdown, navigation, repository metadata, generated references, and
+repository-specific plugins.
+
+The Material integration is deliberately limited to:
+
+- one theme inheritance declaration in `mkdocs_theme.yml`;
+- one `main.html` override that calls `super()` and adds shared assets,
+  version navigation, and the historical warning; and
+- CSS layered over Material's public class surface.
+
+No documentation content depends on a Material template. A future centrally
+managed Zensical migration can replace this package's template and CSS layer
+without rewriting consumer Markdown.
+
+The theme disables remote web fonts and uses a local system-font stack. All
+StateForge branding required at runtime is packaged inside the distribution.
+
+## Distribution verification
+
+Build the wheel and source distribution from the same source revision:
+
+```bash
+python -m build
+```
+
+The repository test and CI suites inspect both archives, install each artifact
+in a clean environment, select `theme.name: stateforge`, and build the fixture
+site strictly. Browser checks cover desktop and mobile layouts, light and dark
+schemes, focus visibility, component contrast, version navigation, and bundled
+logo and favicon resolution.
 
 ## Development
 

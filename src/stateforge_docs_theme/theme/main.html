@@ -3,5 +3,47 @@
 {% block extrahead %}
   {{ super() }}
   <link rel="stylesheet" href="{{ 'assets/stylesheets/stateforge.css' | url }}">
+  {% set stateforge = config.extra.stateforge %}
+  <style id="stateforge-brand-tokens">
+    :root {
+      --sf-accent: {{ stateforge.accent }};
+      --sf-accent-contrast: {{ stateforge.accent_foreground }};
+      --sf-logo-filter: {{ stateforge.logo_filter }};
+    }
+  </style>
   <script defer src="{{ 'assets/javascripts/procedure-player.js' | url }}"></script>
+{% endblock %}
+
+{% block header %}
+  {{ super() }}
+  {% set stateforge = config.extra.stateforge %}
+  {% if stateforge.historical %}
+    <aside class="sf-historical-warning" role="status">
+      <div class="md-grid">
+        You are reading StateForge documentation for
+        <strong>{{ stateforge.documentation_version }}</strong>.
+        {% if stateforge.latest_url %}
+          <a href="{{ stateforge.latest_url }}">
+            Read the latest version ({{ stateforge.latest_version }})
+          </a>
+        {% endif %}
+      </div>
+    </aside>
+  {% endif %}
+  {% if stateforge.versions %}
+    <nav class="sf-version-selector" aria-label="Documentation versions">
+      <div class="md-grid sf-version-selector__inner">
+        <span class="sf-version-selector__label">Documentation version</span>
+        <ul>
+          {% for version in stateforge.versions %}
+            <li>
+              <a href="{{ version.url }}"{% if version.current %} aria-current="page"{% endif %}>
+                {{ version.label }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </nav>
+  {% endif %}
 {% endblock %}

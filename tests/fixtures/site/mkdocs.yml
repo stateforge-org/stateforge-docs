@@ -1,28 +1,22 @@
 site_name: StateForge documentation fixture
 site_url: https://docs.stateforge.net/fixture/
+repo_name: stateforge-org/stateforge-docs
+repo_url: https://github.com/stateforge-org/stateforge-docs
 
 theme:
   name: stateforge
-  palette:
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Use system preference
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      toggle:
-        icon: material/brightness-7
-        name: Use dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      toggle:
-        icon: material/brightness-4
-        name: Use light mode
 
 plugins:
   - search
   - stateforge:
       component: protocol
+      documentation_version: v0.1.0
+      latest_version: v0.2.0
+      versions:
+        - label: v0.2.0
+          url: ../v0.2.0/
+        - label: v0.1.0
+          url: ./
 
 nav:
   - v0.1.0:
