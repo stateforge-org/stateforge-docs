@@ -6,6 +6,13 @@ repo_url: https://github.com/stateforge-org/stateforge-docs
 theme:
   name: stateforge
 
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 plugins:
   - material/search
   - stateforge:

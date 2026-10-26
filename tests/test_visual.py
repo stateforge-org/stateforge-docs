@@ -95,9 +95,16 @@ def test_responsive_light_and_dark_rendering(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
     )
     assert page.locator("stateforge-procedure-player").is_visible()
+    assert page.locator("pre.mermaid svg").is_visible()
+    assert page.locator("pre.mermaid .error-icon").count() == 0
     flow = page.locator("stateforge-entity-flow")
     assert flow.is_visible()
     assert flow.locator(".sf-entity-flow__entity").count() == 4
+    if width >= 1000:
+        viewport = flow.locator(".sf-entity-flow__viewport")
+        assert viewport.evaluate(
+            "element => element.scrollWidth <= element.clientWidth"
+        )
 
     evidence = Path(os.environ.get("STATEFORGE_VISUAL_EVIDENCE", str(tmp_path)))
     evidence.mkdir(parents=True, exist_ok=True)

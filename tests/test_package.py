@@ -21,10 +21,16 @@ def test_theme_contains_bundled_brand_and_player_assets() -> None:
     player = theme / "assets/javascripts/procedure-player.js"
     entity_flow = theme / "assets/javascripts/entity-flow.js"
     lifecycle = theme / "assets/javascripts/lifecycle-flow.js"
+    mermaid_renderer = theme / "assets/javascripts/mermaid-renderer.js"
+    mermaid_bundle = theme / "assets/vendor/mermaid/mermaid.min.js"
+    mermaid_license = theme / "assets/vendor/mermaid/LICENSE"
     selector = theme / "assets/javascripts/version-selector.js"
     assert player.is_file()
     assert entity_flow.is_file()
     assert lifecycle.is_file()
+    assert mermaid_renderer.is_file()
+    assert mermaid_bundle.is_file()
+    assert mermaid_license.is_file()
     assert selector.is_file()
     source = player.read_text()
     assert "Bootstrap" not in source
@@ -52,6 +58,8 @@ def test_theme_contains_bundled_brand_and_player_assets() -> None:
     for asset in theme.rglob("*"):
         if asset.suffix in {".css", ".html", ".js"}:
             contents = asset.read_text()
+            if asset == mermaid_bundle:
+                continue
             assert "http://" not in contents
             assert "https://" not in contents
 
@@ -86,6 +94,8 @@ def test_fixture_site_builds_with_interactive_player(tmp_path: Path) -> None:
     assert "assets/javascripts/procedure-player.js" in rendered
     assert "assets/javascripts/entity-flow.js" in rendered
     assert "assets/javascripts/lifecycle-flow.js" in rendered
+    assert "assets/vendor/mermaid/mermaid.min.js" in rendered
+    assert "assets/javascripts/mermaid-renderer.js" in rendered
     assert "assets/javascripts/version-selector.js" in rendered
     assert "assets/stylesheets/stateforge.css" in rendered
     assert "stateforge-brand-tokens" in rendered

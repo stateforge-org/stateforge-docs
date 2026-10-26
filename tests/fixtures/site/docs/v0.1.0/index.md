@@ -1,5 +1,13 @@
 # Procedure player
 
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant Provider
+    Agent->>Provider: Handshake
+    Provider-->>Agent: Session
+```
+
 The declaration version is derived from the enclosing `v0.1.0/` documentation
 directory.
 

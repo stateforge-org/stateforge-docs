@@ -1095,7 +1095,7 @@ stateforge-entity-flow {
 }
 
 .sf-entity-flow__stage {
-  min-width: max(100%, calc(var(--sf-entity-flow-count) * 11rem));
+  min-width: max(100%, calc(var(--sf-entity-flow-count) * 8rem));
 }
 
 .sf-entity-flow__entities,
