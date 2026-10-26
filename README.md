@@ -51,6 +51,78 @@ fields, malformed actors, invalid scenarios, and unsafe inline data. The
 generated page contains a static ordered fallback before JavaScript enhances
 it into the interactive player.
 
+## Interactive lifecycle summaries
+
+Landing pages may use the compact lifecycle component when two endpoints
+exchange a short, ordered series of messages. The visible stage buttons remain
+the complete static explanation. With JavaScript enabled, selecting a stage
+updates the endpoint states and plays its declared messages once.
+
+Each `[data-sf-flow-step]` button declares:
+
+- `data-source-state` and `data-target-state` for the endpoint summaries;
+- `data-result` for the stable state reached after playback; and
+- `data-events` as a JSON array of `direction`, `label`, and `detail` values.
+
+`forward` moves from source to target and `reverse` moves from target to source.
+The component uses native buttons, reports the selected stage with
+`aria-pressed`, exposes one polite live status, and skips playback when the
+visitor requests reduced motion. The shared script contains no
+repository-specific actors or messages.
+
+## Declarative entity flows
+
+Use an entity flow for a compact, animated explanation of one responsibility
+transfer across several real components. The renderer, interaction controls,
+accessibility behavior, StateForge branding, and bundled third-party marks live
+in this package. The owning repository supplies only version-local YAML.
+
+````markdown
+```stateforge-entity-flow
+source: trigger-publication-overview.yaml
+```
+````
+
+An entity declaration describes identity, visual role, and initial state. Each
+step declares the active entities, state changes, directed transitions, and
+the exact owner of responsibility at that point:
+
+```yaml
+schema: stateforge.docs/entity-flow/v1
+flow: trigger-publication
+title: Trigger publication responsibility flow
+entities:
+  - id: provider
+    label: Example Provider
+    kind: StateForge Provider
+    brand: stateforge
+    accent: provider
+    state: {label: Pending queue, value: Empty}
+  - id: agent
+    label: StateForge Agent
+    kind: StateForge Agent
+    brand: stateforge
+    accent: agent
+    state: {label: Trigger record, value: Not accepted}
+steps:
+  - id: publish
+    phase: Trigger publication
+    title: Publish the trigger
+    detail: The Provider retains the publication while sending it.
+    active: [provider, agent]
+    states:
+      provider: {label: Pending queue, value: 1 retained publication}
+    transitions:
+      - {source: provider, target: agent, label: TriggerPublication}
+    responsibility:
+      entities: [provider]
+      label: The Provider remains responsible until durable acceptance.
+```
+
+Supported bundled brands are `stateforge`, `service`, and `none`. `service` is
+a neutral service glyph for factual product references; `none` uses a compact
+text mark derived from the entity label.
+
 ## Consumer configuration
 
 ```yaml
@@ -58,17 +130,20 @@ theme:
   name: stateforge
 
 plugins:
-  - search
+  - material/search
   - stateforge:
       component: protocol
       documentation_version: v0.1.0
       latest_version: v0.2.0
       versions:
         - label: v0.2.0
-          url: ../v0.2.0/
+          url: v0.2.0/
         - label: v0.1.0
-          url: ./
+          url: v0.1.0/
 ```
+
+Version URLs are relative to the documentation root. The theme resolves them
+correctly from root pages and nested procedure or reference pages.
 
 Built-in component accents are provided for `stateforge`, `agent`, `provider`,
 `protocol`, `control-plane`, and `sf-aop`. A future repository may use any

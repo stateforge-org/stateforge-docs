@@ -16,9 +16,13 @@ from mkdocs.structure.pages import Page
 
 from stateforge_docs_theme.branding import (
     COMPONENT_ACCENTS,
-    LIGHT_FOREGROUND,
     component_accent,
     contrast_foreground,
+)
+from stateforge_docs_theme.entity_flow import (
+    EntityFlowDeclarationError,
+    load_entity_flow,
+    render_entity_flow,
 )
 from stateforge_docs_theme.procedure.model import (
     ProcedureDeclarationError,
@@ -28,6 +32,10 @@ from stateforge_docs_theme.procedure.renderer import render_player
 
 _PROCEDURE_FENCE = re.compile(
     r"^```stateforge-procedure[ \t]*\n(?P<body>.*?)^```[ \t]*$",
+    re.MULTILINE | re.DOTALL,
+)
+_ENTITY_FLOW_FENCE = re.compile(
+    r"^```stateforge-entity-flow[ \t]*\n(?P<body>.*?)^```[ \t]*$",
     re.MULTILINE | re.DOTALL,
 )
 
@@ -60,6 +68,7 @@ class StateForgeDocsConfig(Config):  # type: ignore[no-untyped-call]
     )
     historical_warning = config_options.Type(bool, default=True)
     procedure_players = config_options.Type(bool, default=True)
+    entity_flows = config_options.Type(bool, default=True)
 
 
 class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
@@ -105,12 +114,8 @@ class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
         )
 
         foreground = contrast_foreground(accent)
-        logo_filter = (
-            "brightness(0) invert(1)"
-            if foreground == LIGHT_FOREGROUND
-            else "brightness(0)"
-        )
         extra = dict(config.extra or {})
+        extra.setdefault("generator", False)
         stateforge = dict(extra.get("stateforge") or {})
         stateforge.update(
             {
@@ -122,7 +127,6 @@ class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
                 "known_components": sorted(COMPONENT_ACCENTS),
                 "latest_url": latest_url,
                 "latest_version": latest_version,
-                "logo_filter": logo_filter,
                 "versions": versions,
             }
         )
@@ -139,7 +143,7 @@ class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
         files: Files,
     ) -> str:
         del files
-        if not self.config.procedure_players:
+        if not self.config.procedure_players and not self.config.entity_flows:
             return markdown
 
         if page.file.abs_src_path is None:
@@ -147,7 +151,7 @@ class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
         page_source = Path(page.file.abs_src_path)
         docs_dir = Path(config.docs_dir)
 
-        def replace(match: re.Match[str]) -> str:
+        def replace_procedure(match: re.Match[str]) -> str:
             try:
                 directive = _load_directive(match.group("body"))
                 source = (page_source.parent / directive["source"]).resolve()
@@ -161,7 +165,27 @@ class StateForgeDocsPlugin(  # type: ignore[no-untyped-call]
                     f"{page.file.src_path}: invalid stateforge-procedure block: {error}"
                 ) from error
 
-        return _PROCEDURE_FENCE.sub(replace, markdown)
+        def replace_entity_flow(match: re.Match[str]) -> str:
+            try:
+                directive = _load_directive(match.group("body"))
+                if "scenario" in directive:
+                    raise EntityFlowDeclarationError(
+                        "entity-flow directives do not select scenarios"
+                    )
+                source = (page_source.parent / directive["source"]).resolve()
+                declaration = load_entity_flow(source, docs_dir=docs_dir)
+                return render_entity_flow(declaration)
+            except (EntityFlowDeclarationError, ValueError) as error:
+                raise PluginError(
+                    f"{page.file.src_path}: invalid stateforge-entity-flow block: "
+                    f"{error}"
+                ) from error
+
+        if self.config.entity_flows:
+            markdown = _ENTITY_FLOW_FENCE.sub(replace_entity_flow, markdown)
+        if self.config.procedure_players:
+            markdown = _PROCEDURE_FENCE.sub(replace_procedure, markdown)
+        return markdown
 
 
 def _load_directive(source: str) -> dict[str, str]:

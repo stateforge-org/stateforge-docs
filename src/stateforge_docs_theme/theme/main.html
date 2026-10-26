@@ -6,12 +6,14 @@
   {% set stateforge = config.extra.stateforge %}
   <style id="stateforge-brand-tokens">
     :root {
-      --sf-accent: {{ stateforge.accent }};
-      --sf-accent-contrast: {{ stateforge.accent_foreground }};
-      --sf-logo-filter: {{ stateforge.logo_filter }};
+      --sf-component-accent: {{ stateforge.accent }};
+      --sf-component-accent-contrast: {{ stateforge.accent_foreground }};
     }
   </style>
+  <script defer src="{{ 'assets/javascripts/entity-flow.js' | url }}"></script>
   <script defer src="{{ 'assets/javascripts/procedure-player.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/lifecycle-flow.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/version-selector.js' | url }}"></script>
 {% endblock %}
 
 {% block header %}
@@ -33,16 +35,18 @@
   {% if stateforge.versions %}
     <nav class="sf-version-selector" aria-label="Documentation versions">
       <div class="md-grid sf-version-selector__inner">
-        <span class="sf-version-selector__label">Documentation version</span>
-        <ul>
+        <label class="sf-version-selector__label" for="sf-documentation-version">
+          Documentation version
+        </label>
+        <div class="sf-version-selector__control">
+          <select id="sf-documentation-version" data-sf-version-selector>
           {% for version in stateforge.versions %}
-            <li>
-              <a href="{{ version.url }}"{% if version.current %} aria-current="page"{% endif %}>
-                {{ version.label }}
-              </a>
-            </li>
+            <option value="{{ version.url | url }}"{% if version.current %} selected{% endif %}>
+              {{ version.label }}{% if version.current %} (current){% endif %}
+            </option>
           {% endfor %}
-        </ul>
+          </select>
+        </div>
       </div>
     </nav>
   {% endif %}

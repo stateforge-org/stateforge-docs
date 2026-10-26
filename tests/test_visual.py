@@ -86,18 +86,58 @@ def test_responsive_light_and_dark_rendering(
         expected_palette
     )
     assert page.locator(".sf-version-selector").is_visible()
+    assert page.locator("select[data-sf-version-selector]").is_visible()
+    assert page.locator(".md-search").count() == 1
+    assert page.locator(".md-search__input").count() == 1
     assert page.locator(".sf-historical-warning").is_visible()
     assert page.locator(".md-header__source").is_visible() is (width >= 1220)
     assert page.evaluate(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
     )
     assert page.locator("stateforge-procedure-player").is_visible()
+    flow = page.locator("stateforge-entity-flow")
+    assert flow.is_visible()
+    assert flow.locator(".sf-entity-flow__entity").count() == 4
 
     evidence = Path(os.environ.get("STATEFORGE_VISUAL_EVIDENCE", str(tmp_path)))
     evidence.mkdir(parents=True, exist_ok=True)
     page.screenshot(
         path=evidence / f"fixture-{width}-{scheme}.png",
         full_page=True,
+    )
+    page.close()
+
+
+@pytest.mark.visual
+def test_entity_flow_steps_state_and_responsibility(
+    browser: Browser,
+    site_url: str,
+) -> None:
+    page: Page = browser.new_page(viewport={"width": 1440, "height": 1000})
+    page.goto(f"{site_url}/v0.1.0/", wait_until="networkidle")
+
+    flow = page.locator("stateforge-entity-flow")
+    assert flow.locator(".sf-entity-flow__phase strong").inner_text() == (
+        "Unit state changed"
+    )
+    flow.locator('.sf-entity-flow__step-buttons button[data-step="2"]').click()
+    assert flow.locator(".sf-entity-flow__phase strong").inner_text() == (
+        "Trigger publication"
+    )
+    provider = flow.locator('.sf-entity-flow__entity[data-entity="provider"]')
+    assert "is-responsible" in (provider.get_attribute("class") or "")
+    assert flow.locator(".sf-entity-flow__message").inner_text() == (
+        "TriggerPublication"
+    )
+
+    flow.locator('button[data-action="next"]').click()
+    assert flow.locator(".sf-entity-flow__phase strong").inner_text() == (
+        "Durable acknowledgement"
+    )
+    agent = flow.locator('.sf-entity-flow__entity[data-entity="agent"]')
+    assert "is-responsible" in (agent.get_attribute("class") or "")
+    assert page.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
     )
     page.close()
 
@@ -118,17 +158,33 @@ def test_focus_brand_assets_and_component_accent(
     box_shadow = focused.evaluate("element => getComputedStyle(element).boxShadow")
     assert box_shadow != "none"
 
-    accent = page.evaluate(
+    component_accent = page.evaluate(
         "getComputedStyle(document.documentElement)"
-        ".getPropertyValue('--sf-accent').trim()"
+        ".getPropertyValue('--sf-component-accent').trim()"
     )
-    assert accent == "#a95000"
+    assert component_accent == "#a95000"
+    brand = page.evaluate(
+        "getComputedStyle(document.documentElement)"
+        ".getPropertyValue('--sf-brand').trim()"
+    )
+    assert brand == "#7fbcfb"
+    header_background = page.locator(".md-header").evaluate(
+        "element => getComputedStyle(element).backgroundColor"
+    )
+    assert header_background == "rgb(16, 19, 23)"
     logo_filter = page.locator(".md-header__button.md-logo img").evaluate(
         "element => getComputedStyle(element).filter"
     )
-    assert logo_filter != "none"
+    assert logo_filter == "none"
     assert page.locator('[aria-label="Documentation versions"]').count() == 1
-    assert page.locator('[aria-current="page"]').get_attribute("href") == "./"
+    selector = page.locator("select[data-sf-version-selector]")
+    assert selector.evaluate("element => element.tagName") == "SELECT"
+    assert selector.input_value() == "./"
+    assert selector.locator("option").count() == 2
+
+    selector.select_option(label="v0.2.0")
+    page.wait_for_url("**/v0.2.0/")
+    assert page.url.endswith("/v0.2.0/")
 
     for asset in (
         "/assets/images/stateforge-mark.svg",
@@ -137,4 +193,36 @@ def test_focus_brand_assets_and_component_accent(
         response = page.request.get(f"{site_url}{asset}")
         assert response.ok
         assert response.headers["content-type"].startswith("image/svg+xml")
+    page.close()
+
+
+@pytest.mark.visual
+def test_lifecycle_flow_plays_selected_stage(
+    browser: Browser,
+    site_url: str,
+) -> None:
+    page: Page = browser.new_page(viewport={"width": 1280, "height": 900})
+    page.goto(f"{site_url}/v0.1.0/", wait_until="networkidle")
+
+    lifecycle = page.locator("[data-sf-lifecycle]")
+    steps = lifecycle.locator("[data-sf-flow-step]")
+    assert steps.count() == 2
+    assert steps.nth(0).get_attribute("aria-pressed") == "true"
+    assert steps.nth(0).locator("[data-sf-flow-action]").inner_text() == "REPLAY"
+    assert steps.nth(1).locator("[data-sf-flow-action]").inner_text() == "PLAY"
+
+    steps.nth(1).click()
+    assert steps.nth(1).get_attribute("aria-pressed") == "true"
+    assert steps.nth(1).locator("[data-sf-flow-action]").inner_text() == "REPLAY"
+    assert lifecycle.locator("[data-sf-flow-source-state]").inner_text() == (
+        "Awaits disposition"
+    )
+    assert lifecycle.locator("[data-sf-flow-target-state]").inner_text() == (
+        "Acknowledges state"
+    )
+    page.wait_for_function(
+        "document.querySelector('[data-sf-flow-status]').textContent === "
+        "'State acknowledged'"
+    )
+    assert lifecycle.get_attribute("aria-busy") == "false"
     page.close()

@@ -89,6 +89,5 @@ def test_future_component_configuration_is_rendered(tmp_path: Path) -> None:
     build(config)
 
     rendered = (tmp_path / "site/index.html").read_text()
-    assert "#e8c547" in rendered
-    assert "--sf-logo-filter: brightness(0)" in rendered
+    assert "--sf-component-accent: #e8c547" in rendered
     assert "stateforge-mark.svg" in rendered
