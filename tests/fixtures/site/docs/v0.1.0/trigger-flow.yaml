@@ -1,0 +1,128 @@
+schema: stateforge.docs/entity-flow/v1
+flow: trigger-publication
+title: Trigger publication responsibility flow
+summary: A service-state observation becomes an acknowledged trigger.
+autoplay: false
+entities:
+  - id: service
+    label: example.service
+    kind: Managed service
+    brand: service
+    accent: service
+    description: The local workload whose state is observed.
+    state:
+      label: Unit state
+      value: active
+      tone: success
+  - id: manager
+    label: systemd
+    kind: Service manager
+    brand: none
+    accent: systemd
+    description: Owns the authoritative unit state.
+    state:
+      label: Observation
+      value: Unit is active
+      tone: success
+  - id: provider
+    label: Example Provider
+    kind: StateForge Provider
+    brand: stateforge
+    accent: provider
+    description: Converts the observation into a declared trigger.
+    state:
+      label: Pending queue
+      value: Empty
+  - id: agent
+    label: StateForge Agent
+    kind: StateForge Agent
+    brand: stateforge
+    accent: agent
+    description: Validates the publication and records its disposition.
+    state:
+      label: Trigger record
+      value: Not accepted
+steps:
+  - id: service-fails
+    phase: Unit state changed
+    title: The service stops
+    detail: The service manager records the unit transition from active to failed.
+    active: [service, manager]
+    states:
+      service:
+        label: Unit state
+        value: failed
+        tone: failure
+      manager:
+        label: Observation
+        value: Unit failed
+        tone: failure
+    transitions:
+      - source: service
+        target: manager
+        label: active → failed
+        tone: failure
+    responsibility:
+      entities: [provider]
+      label: The Provider remains responsible for any publication it creates.
+  - id: provider-observes
+    phase: Provider observation
+    title: The Provider observes the failure
+    detail: The Provider normalizes the unit-state change into a declared event.
+    active: [manager, provider]
+    states:
+      provider:
+        label: Observation
+        value: Failure normalized
+        tone: warning
+    transitions:
+      - source: manager
+        target: provider
+        label: unit failed
+        tone: warning
+    responsibility:
+      entities: [provider]
+      label: The Provider owns the event until the Agent accepts it durably.
+  - id: publish-trigger
+    phase: Trigger publication
+    title: Publish the trigger
+    detail: The Provider retains the publication while sending its immutable identity and payload.
+    active: [provider, agent]
+    states:
+      provider:
+        label: Pending queue
+        value: 1 retained publication
+        tone: warning
+      agent:
+        label: Validation
+        value: Checking publication
+        tone: warning
+    transitions:
+      - source: provider
+        target: agent
+        label: TriggerPublication
+    responsibility:
+      entities: [provider]
+      label: Sending does not transfer responsibility; the Provider still retains the publication.
+  - id: acknowledge
+    phase: Durable acknowledgement
+    title: Acknowledge the accepted trigger
+    detail: The Agent commits the trigger before returning its terminal disposition.
+    active: [agent, provider]
+    states:
+      provider:
+        label: Pending queue
+        value: Empty
+        tone: success
+      agent:
+        label: Trigger record
+        value: Accepted durably
+        tone: success
+    transitions:
+      - source: agent
+        target: provider
+        label: ACCEPTED_NEW
+        tone: success
+    responsibility:
+      entities: [agent]
+      label: The Agent now owns subsequent delivery of the accepted trigger.

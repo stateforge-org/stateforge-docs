@@ -1,0 +1,32 @@
+extends: material
+locale: en
+logo: assets/images/stateforge-mark.svg
+favicon: assets/images/stateforge-favicon.svg
+font: false
+
+palette:
+  - media: "(prefers-color-scheme)"
+    toggle:
+      icon: material/brightness-auto
+      name: Use system preference
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    toggle:
+      icon: material/brightness-7
+      name: Use dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    toggle:
+      icon: material/brightness-4
+      name: Use light mode
+
+icon:
+  repo: fontawesome/brands/github
+
+features:
+  - navigation.sections
+  - navigation.indexes
+  - navigation.top
+  - content.code.copy
+  - search.suggest
+  - search.highlight

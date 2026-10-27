@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ 'assets/stylesheets/stateforge.css' | url }}">
+  {% set stateforge = config.extra.stateforge %}
+  <style id="stateforge-brand-tokens">
+    :root {
+      --sf-component-accent: {{ stateforge.accent }};
+      --sf-component-accent-contrast: {{ stateforge.accent_foreground }};
+    }
+  </style>
+  <script defer src="{{ 'assets/vendor/mermaid/mermaid.min.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/mermaid-renderer.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/entity-flow.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/procedure-player.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/lifecycle-flow.js' | url }}"></script>
+  <script defer src="{{ 'assets/javascripts/version-selector.js' | url }}"></script>
+{% endblock %}
+
+{% block header %}
+  {{ super() }}
+  {% set stateforge = config.extra.stateforge %}
+  {% if stateforge.historical %}
+    <aside class="sf-historical-warning" role="status">
+      <div class="md-grid">
+        You are reading StateForge documentation for
+        <strong>{{ stateforge.documentation_version }}</strong>.
+        {% if stateforge.latest_url %}
+          <a href="{{ stateforge.latest_url }}">
+            Read the latest version ({{ stateforge.latest_version }})
+          </a>
+        {% endif %}
+      </div>
+    </aside>
+  {% endif %}
+  {% if stateforge.versions %}
+    <nav class="sf-version-selector" aria-label="Documentation versions">
+      <div class="md-grid sf-version-selector__inner">
+        <label class="sf-version-selector__label" for="sf-documentation-version">
+          Documentation version
+        </label>
+        <div class="sf-version-selector__control">
+          <select id="sf-documentation-version" data-sf-version-selector>
+          {% for version in stateforge.versions %}
+            <option value="{{ version.url | url }}"{% if version.current %} selected{% endif %}>
+              {{ version.label }}{% if version.current %} (current){% endif %}
+            </option>
+          {% endfor %}
+          </select>
+        </div>
+      </div>
+    </nav>
+  {% endif %}
+{% endblock %}

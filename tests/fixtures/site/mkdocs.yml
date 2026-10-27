@@ -1,0 +1,30 @@
+site_name: StateForge documentation fixture
+site_url: https://docs.stateforge.net/fixture/
+repo_name: stateforge-org/stateforge-docs
+repo_url: https://github.com/stateforge-org/stateforge-docs
+
+theme:
+  name: stateforge
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - material/search
+  - stateforge:
+      component: protocol
+      documentation_version: v0.1.0
+      latest_version: v0.2.0
+      versions:
+        - label: v0.2.0
+          url: v0.2.0/
+        - label: v0.1.0
+          url: v0.1.0/
+
+nav:
+  - v0.1.0:
+      - Procedure player: v0.1.0/index.md

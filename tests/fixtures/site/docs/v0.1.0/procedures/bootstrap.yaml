@@ -1,0 +1,224 @@
+schema: stateforge.docs/procedure/v1
+procedure: bootstrap
+title: Discovery and Bootstrap
+summary: From endpoint publication to a fenced local protocol session.
+default_scenario: success
+
+entities:
+  - id: provider
+    label: Provider Process
+    kind: process
+    role: Publishes its endpoint and serves the local protocol
+  - id: discovery-directory
+    label: Discovery Directory
+    kind: storage
+    role: Carries atomic endpoint descriptors
+  - id: unix-socket
+    label: Unix Socket
+    kind: resource
+    role: Carries the local HTTP/2 connection
+  - id: agent
+    label: StateForge Agent
+    kind: process
+    role: Discovers, validates, and establishes sessions
+
+scenarios:
+  success:
+    label: Successful session
+    steps:
+      - id: publish-endpoint
+        title: Publish the endpoint descriptor
+        detail: The Provider binds its socket and atomically publishes a descriptor for the live endpoint.
+        phase: Endpoint publication
+        active: [provider, discovery-directory, unix-socket, agent]
+        fields: [provider_instance_id, endpoint_generation, socket_path]
+        transitions:
+          - source: provider
+            target: unix-socket
+            label: bind
+          - source: provider
+            target: discovery-directory
+            label: descriptor.json
+        activities:
+          provider:
+            title: Create a discoverable endpoint
+            items:
+              - Bind the Unix socket
+              - Serialize the canonical descriptor
+              - Atomically rename into place
+          discovery-directory:
+            title: Publish one complete observation
+            items:
+              - Replace the temporary file atomically
+          unix-socket:
+            title: Listen for local connections
+            items:
+              - Own the published socket path
+          agent:
+            title: Watch the discovery directory
+            items:
+              - Observe create and replace events
+              - Ignore incomplete temporary files
+        context:
+          kind: Published file
+          value: /run/stateforge-agent/providers/<instance>.1.json
+
+      - id: discover-endpoint
+        title: Discover and validate the descriptor
+        detail: A filesystem event is only a hint; the Agent validates the complete final observation.
+        phase: Endpoint discovery
+        active: [discovery-directory, agent]
+        fields: [bounded read, canonical JSON, identity correlation]
+        transitions:
+          - source: discovery-directory
+            target: agent
+            label: descriptor event
+        activities:
+          discovery-directory:
+            title: Expose the final descriptor
+            items:
+              - Preserve filename and content correlation
+          agent:
+            title: Validate one correlated observation
+            items:
+              - Read the bounded final file
+              - Validate schema and filename identity
+              - Confirm socket and generation
+        context:
+          kind: Trust boundary
+          value: instance + generation + socket must agree
+
+      - id: open-channel
+        title: Open the provisional local channel
+        detail: The Agent connects to the validated Unix socket without trusting the peer yet.
+        phase: Channel establishment
+        active: [agent, unix-socket, provider]
+        fields: [HTTP/2, Unix socket, transport ceilings]
+        transitions:
+          - source: agent
+            target: unix-socket
+            label: connect
+          - source: unix-socket
+            target: provider
+            label: local channel
+        activities:
+          provider:
+            title: Accept local gRPC transport
+            items:
+              - Serve Bootstrap on the shared channel
+          unix-socket:
+            title: Carry the provisional channel
+            items:
+              - Remain bound to this endpoint generation
+          agent:
+            title: Configure the client channel
+            items:
+              - Use the validated socket path
+              - Apply protocol transport ceilings
+        context:
+          kind: Transport
+          value: unix:///run/stateforge-agent/providers/<instance>.1.sock
+
+      - id: validate-request
+        title: Validate the Bootstrap request
+        detail: The Provider compares the requested instance and generation with the endpoint it serves now.
+        phase: Handshake
+        active: [agent, provider]
+        fields: [expected_provider_instance_id, expected_endpoint_generation, supported_versions]
+        transitions:
+          - source: agent
+            target: provider
+            label: HandshakeRequest
+        activities:
+          provider:
+            title: Enforce live endpoint fences
+            items:
+              - Validate the protocol-owned contract
+              - Compare Provider instance and generation
+          agent:
+            title: Await a fenced response
+            items:
+              - Keep the discovery observation unchanged
+              - Apply the Bootstrap deadline
+        context:
+          kind: RPC
+          value: BootstrapService.Handshake
+
+      - id: negotiate-session
+        title: Issue a fresh fenced session
+        detail: The Provider returns a never-reused session bound to its runtime and endpoint generation.
+        phase: Session negotiation
+        active: [provider, agent]
+        fields: [provider_runtime_id, session_id, selected_version]
+        transitions:
+          - source: provider
+            target: agent
+            label: HandshakeResponse
+            tone: success
+        activities:
+          provider:
+            title: Create session state
+            items:
+              - Select the highest mutual version
+              - Generate a fresh session ID
+          agent:
+            title: Validate before retaining state
+            items:
+              - Compare identity and generation fences
+              - Confirm the selected version was offered
+        context:
+          kind: Session fence
+          value: instance + generation + runtime + session + version
+
+      - id: bind-session
+        title: Bind the negotiated session
+        detail: Every later procedure is fenced to the accepted Provider runtime, generation, and session.
+        phase: Session bound
+        active: [agent, provider]
+        fields: [SESSION_BOUND, "next: GetManifest"]
+        transitions:
+          - source: agent
+            target: provider
+            label: session active
+            tone: success
+        activities:
+          provider:
+            title: Serve the active session
+            items:
+              - Reject stale or foreign session IDs
+          agent:
+            title: Store the Provider session
+            items:
+              - Fence every later protocol procedure
+        context:
+          kind: Result
+          value: The provisional channel is now trusted for this session
+
+  incompatible:
+    label: No common wire version
+    prefix:
+      scenario: success
+      through: validate-request
+    steps:
+      - title: Reject incompatible versions
+        detail: No common wire version exists, so the Provider creates no session.
+        phase: Handshake rejected
+        active: [agent, provider]
+        fields: [UNIMPLEMENTED, no session created]
+        transitions:
+          - source: provider
+            target: agent
+            label: UNIMPLEMENTED
+            tone: warning
+        activities:
+          provider:
+            title: Return the canonical status
+            items:
+              - Retain no session state
+          agent:
+            title: Mark this generation incompatible
+            items:
+              - Do not retry the unchanged generation indefinitely
+        context:
+          kind: Negotiation
+          value: offered versions ∩ supported versions = ∅

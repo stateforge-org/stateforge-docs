@@ -1,0 +1,180 @@
+name: Theme CI
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: theme-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    name: Source and browser verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install source and development tools
+        run: python -m pip install --disable-pip-version-check '.[dev]'
+
+      - name: Install workflow linter
+        env:
+          ACTIONLINT_VERSION: v1.7.12
+        run: |
+          actionlint_directory="${RUNNER_TEMP}/actionlint"
+          mkdir -p "${actionlint_directory}"
+          GOBIN="${actionlint_directory}" go install \
+            "github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VERSION}"
+          echo "${actionlint_directory}" >> "${GITHUB_PATH}"
+
+      - name: Verify source and unit behavior
+        run: |
+          python -m ruff format --check .
+          python -m ruff check .
+          python -m mypy src
+          python -m pytest -m 'not visual'
+          actionlint -color
+
+      - name: Audit workflow security
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          inputs: .
+          collect: all
+          online-audits: false
+          persona: auditor
+          min-severity: medium
+          version: v1.30.1
+          token: unused-offline
+          advanced-security: false
+          annotations: true
+
+      - name: Install browser
+        run: python -m playwright install --with-deps chromium
+
+      - name: Verify responsive and accessible presentation
+        env:
+          STATEFORGE_VISUAL_EVIDENCE: evidence/visual
+          STATEFORGE_VISUAL_TESTS: "1"
+        run: python -m pytest tests/test_visual.py
+
+      - name: Preserve visual evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: stateforge-docs-theme-visual-evidence
+          path: evidence/visual
+          if-no-files-found: warn
+
+  build:
+    name: Build reproducible distributions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install build frontend
+        run: python -m pip install --disable-pip-version-check 'build>=1.2'
+
+      - name: Build and compare distributions
+        run: |
+          set -euo pipefail
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          export SOURCE_DATE_EPOCH
+          mkdir -p dist-first dist-second dist evidence/distribution
+          python -m build --outdir dist-first
+          python -m build --outdir dist-second
+          cmp dist-first/*.whl dist-second/*.whl
+          cmp dist-first/*.tar.gz dist-second/*.tar.gz
+          cp dist-first/* dist/
+          sha256sum dist/* | tee evidence/distribution/SHA256SUMS
+          python -m zipfile -l dist/*.whl | tee evidence/distribution/wheel-contents.txt
+          tar -tzf dist/*.tar.gz | tee evidence/distribution/sdist-contents.txt
+          grep -F 'stateforge-mark.svg' evidence/distribution/wheel-contents.txt
+          grep -F 'stateforge-favicon.svg' evidence/distribution/wheel-contents.txt
+          grep -F 'stateforge.css' evidence/distribution/wheel-contents.txt
+          grep -F 'main.html' evidence/distribution/wheel-contents.txt
+          grep -F 'stateforge-mark.svg' evidence/distribution/sdist-contents.txt
+          grep -F 'stateforge-favicon.svg' evidence/distribution/sdist-contents.txt
+          grep -F 'stateforge.css' evidence/distribution/sdist-contents.txt
+          grep -F 'main.html' evidence/distribution/sdist-contents.txt
+
+      - name: Upload exact distributions
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: stateforge-docs-theme-distributions
+          path: |
+            dist
+            evidence/distribution
+          if-no-files-found: error
+
+  installed:
+    name: Installed ${{ matrix.artifact }}
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - artifact: wheel
+            pattern: "*.whl"
+          - artifact: sdist
+            pattern: "*.tar.gz"
+    steps:
+      - name: Check out fixture
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Download exact distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: stateforge-docs-theme-distributions
+          path: artifacts
+
+      - name: Install and build outside the source tree
+        env:
+          ARTIFACT_KIND: ${{ matrix.artifact }}
+          PACKAGE_PATTERN: ${{ matrix.pattern }}
+        run: |
+          set -euo pipefail
+          package="$(find artifacts/dist -type f -name "${PACKAGE_PATTERN}" -print -quit)"
+          test -n "${package}"
+          python -m venv "${RUNNER_TEMP}/consumer"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --disable-pip-version-check "${package}"
+          cd "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/consumer/bin/python" -m mkdocs build \
+            --strict \
+            --config-file "${GITHUB_WORKSPACE}/tests/fixtures/site/mkdocs.yml" \
+            --site-dir "${RUNNER_TEMP}/site-${ARTIFACT_KIND}"
+          test -f "${RUNNER_TEMP}/site-${ARTIFACT_KIND}/v0.1.0/index.html"
+          test -f "${RUNNER_TEMP}/site-${ARTIFACT_KIND}/assets/images/stateforge-mark.svg"
+          test -f "${RUNNER_TEMP}/site-${ARTIFACT_KIND}/assets/images/stateforge-favicon.svg"
