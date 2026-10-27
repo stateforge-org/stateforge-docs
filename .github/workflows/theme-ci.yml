@@ -101,7 +101,8 @@ jobs:
       - name: Build and compare distributions
         run: |
           set -euo pipefail
-          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          export SOURCE_DATE_EPOCH
           mkdir -p dist-first dist-second dist evidence/distribution
           python -m build --outdir dist-first
           python -m build --outdir dist-second
