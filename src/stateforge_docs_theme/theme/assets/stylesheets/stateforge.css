@@ -99,6 +99,19 @@ pre {
   border-left: 3px solid var(--sf-accent);
 }
 
+.md-typeset .sf-mermaid {
+  display: block;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.md-typeset .sf-mermaid > svg {
+  display: block;
+  height: auto;
+  margin-inline: auto;
+  max-width: 100%;
+}
+
 .md-header {
   background: var(--sf-night);
   border-bottom: 1px solid color-mix(in srgb, var(--sf-brand) 28%, transparent);

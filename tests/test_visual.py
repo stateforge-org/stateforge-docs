@@ -79,6 +79,15 @@ def test_responsive_light_and_dark_rendering(
     expected_palette: str,
 ) -> None:
     page = browser.new_page(viewport={"width": width, "height": height})
+    console_errors: list[str] = []
+    page_errors: list[str] = []
+    page.on(
+        "console",
+        lambda message: (
+            console_errors.append(message.text) if message.type == "error" else None
+        ),
+    )
+    page.on("pageerror", lambda error: page_errors.append(str(error)))
     page.emulate_media(color_scheme=scheme)
     page.goto(f"{site_url}/v0.1.0/", wait_until="networkidle")
 
@@ -95,8 +104,19 @@ def test_responsive_light_and_dark_rendering(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
     )
     assert page.locator("stateforge-procedure-player").is_visible()
-    assert page.locator("pre.mermaid svg").is_visible()
-    assert page.locator("pre.mermaid .error-icon").count() == 0
+    assert page.locator("pre.sf-mermaid svg").is_visible()
+    assert page.locator("pre.sf-mermaid .error-icon").count() == 0
+    assert page.locator("pre.mermaid[data-processed]").count() == 0
+    assert not [
+        error
+        for error in console_errors
+        if "Mermaid" in error or "UnknownDiagramError" in error
+    ]
+    assert not [
+        error
+        for error in page_errors
+        if "Mermaid" in error or "UnknownDiagramError" in error
+    ]
     flow = page.locator("stateforge-entity-flow")
     assert flow.is_visible()
     assert flow.locator(".sf-entity-flow__entity").count() == 4

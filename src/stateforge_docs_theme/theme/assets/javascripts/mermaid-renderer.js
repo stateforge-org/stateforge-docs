@@ -30,8 +30,7 @@
   }
 
   // Mermaid registers its automatic DOMContentLoaded renderer when the bundle
-  // is evaluated. Disable it immediately, before that event fires, so the
-  // StateForge renderer is the single owner of diagram rendering.
+  // is evaluated. Disable it immediately so StateForge owns the initial pass.
   window.mermaid.initialize(configuration());
 
   async function render(root = document) {
@@ -45,6 +44,11 @@
           diagram.textContent = code.textContent;
         }
         await window.mermaid.run({ nodes: [diagram] });
+        // Material also watches `.mermaid` blocks during its document
+        // lifecycle. Rename the completed block so it cannot mistake the
+        // generated SVG and CSS for Mermaid source and render it a second time.
+        diagram.classList.remove("mermaid");
+        diagram.classList.add("sf-mermaid");
       } catch (error) {
         console.error("StateForge Mermaid diagram is invalid", error);
       }
